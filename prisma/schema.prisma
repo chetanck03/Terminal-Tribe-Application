@@ -3,13 +3,12 @@
 
 generator client {
   provider = "prisma-client-js"
-  previewFeatures = ["interactiveTransactions"]
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl = env("DATABASE_URL")
+  provider     = "postgresql"
+  url          = env("DATABASE_URL")
+  directUrl    = env("DATABASE_URL")
   relationMode = "foreignKeys"
 }
 
@@ -65,31 +64,35 @@ model EventUser {
 }
 
 model Club {
-  id          String      @id @default(cuid())
+  id          String        @id @default(cuid())
   name        String
   description String
   content     String?
   image       String?
   category    String?
-  status      String      @default("ACTIVE")
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  createdBy   User        @relation("CreatedClubs", fields: [createdById], references: [id])
+  status      String        @default("ACTIVE")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  createdBy   User          @relation("CreatedClubs", fields: [createdById], references: [id])
   createdById String
   members     ClubMember[]
   messages    ClubMessage[]
+  creator     User          @relation("ClubCreator", fields: [creatorId], references: [id])
+  creatorId   String
+  Event       Event[]
 
   @@index([createdById])
+  @@index([creatorId])
 }
 
 model ClubMember {
-  id        String   @id @default(cuid())
-  club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
-  clubId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  role      String   @default("MEMBER")
-  joinedAt  DateTime @default(now())
+  id       String   @id @default(cuid())
+  club     Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  clubId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  role     String   @default("MEMBER")
+  joinedAt DateTime @default(now())
 
   @@unique([clubId, userId])
   @@index([clubId])
@@ -106,10 +109,10 @@ model ClubMessage {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@map("club_messages")
   @@index([clubId])
   @@index([userId])
   @@index([createdAt])
+  @@map("club_messages")
 }
 
 model Notification {
