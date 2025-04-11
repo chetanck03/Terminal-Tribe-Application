@@ -1,0 +1,160 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["interactiveTransactions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+  relationMode = "foreignKeys"
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  name          String?
+  password      String?
+  avatar        String?
+  role          Role           @default(USER)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  events        Event[]        @relation("EventCreator")
+  joinedEvents  EventUser[]
+  clubsCreated  Club[]         @relation("ClubCreator")
+  clubsMember   ClubMember[]
+  notifications Notification[]
+  posts         Post[]
+  createdClubs  Club[]         @relation("CreatedClubs")
+  clubMessages  ClubMessage[]
+
+  @@index([email])
+}
+
+model Event {
+  id          String      @id @default(cuid())
+  title       String
+  description String
+  content     String?     @db.Text
+  date        DateTime
+  location    String
+  image       String?
+  createdBy   User        @relation("EventCreator", fields: [userId], references: [id])
+  userId      String
+  status      EventStatus @default(PENDING)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  attendees   EventUser[]
+  club        Club?       @relation(fields: [clubId], references: [id])
+  clubId      String?
+}
+
+model EventUser {
+  id        String   @id @default(cuid())
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId   String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  status    String   @default("attending") // attending, interested, not attending
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, userId])
+}
+
+model Club {
+  id          String      @id @default(cuid())
+  name        String
+  description String
+  content     String?
+  image       String?
+  category    String?
+  status      String      @default("ACTIVE")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  createdBy   User        @relation("CreatedClubs", fields: [createdById], references: [id])
+  createdById String
+  members     ClubMember[]
+  messages    ClubMessage[]
+
+  @@index([createdById])
+}
+
+model ClubMember {
+  id        String   @id @default(cuid())
+  club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  clubId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  role      String   @default("MEMBER")
+  joinedAt  DateTime @default(now())
+
+  @@unique([clubId, userId])
+  @@index([clubId])
+  @@index([userId])
+}
+
+model ClubMessage {
+  id        String   @id @default(cuid())
+  club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  clubId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("club_messages")
+  @@index([clubId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  message   String
+  read      Boolean  @default(false)
+  type      String   @default("info") // info, warning, success, error
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  image     String?
+  createdBy User     @relation(fields: [userId], references: [id])
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  USER
+  ADMIN
+  MODERATOR
+}
+
+enum EventStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum ClubStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  REJECTED
+}
+
+enum MemberRole {
+  ADMIN
+  MODERATOR
+  MEMBER
+}
