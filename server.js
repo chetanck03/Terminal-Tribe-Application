@@ -797,57 +797,47 @@ app.post('/api/auth/signup', async (req, res) => {
   }
 });
 
-// Start the server and check database connection
-const startServer = async () => {
-  try {
-    // First disconnect to ensure clean connection
-    await prisma.$disconnect();
-    
-    // Test database connection
-    await prisma.$connect();
-    console.log('✅ Database connection established successfully');
-    
-    // Database connection URL (masked for security)
-    const dbUrl = process.env.DATABASE_URL || 'No database URL found';
-    const maskedUrl = dbUrl.replace(/:([^:@]+)@/, ':****@');
-    console.log(`📊 Database: ${maskedUrl}`);
-    
-    // Start the server
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running at http://localhost:${PORT}`);
-      console.log(`📝 API endpoints available:`);
-      console.log(`   - Health check: http://localhost:${PORT}/api/health`);
-      console.log(`   - Database test: http://localhost:${PORT}/api/test-db`);
-      console.log(`   - Register user: http://localhost:${PORT}/api/auth/register [POST]`);
-      console.log(`   - Users: http://localhost:${PORT}/api/users [GET, PUT, DELETE]`);
-      console.log(`   - Events: http://localhost:${PORT}/api/events [GET, POST]`);
-      console.log(`   - Clubs: http://localhost:${PORT}/api/clubs [GET, POST, PUT, DELETE]`);
-      console.log(`   - Admin Dashboard: http://localhost:${PORT}/api/admin/dashboard [GET]`);
-    });
-  } catch (error) {
-    console.error('❌ Failed to start server:');
-    console.error(`   ${error.message}`);
-    process.exit(1);
-  }
-};
+// If this is a direct execution (not imported)
+if (import.meta.url === `file://${process.argv[1]}`) {
+  // Start server normally
+  const startServer = async () => {
+    try {
+      // First disconnect to ensure clean connection
+      await prisma.$disconnect();
+      
+      // Test database connection
+      await prisma.$connect();
+      console.log('✅ Database connection established successfully');
+      
+      // Database connection URL (masked for security)
+      const dbUrl = process.env.DATABASE_URL || 'No database URL found';
+      const maskedUrl = dbUrl.replace(/:([^:@]+)@/, ':****@');
+      console.log(`📊 Database: ${maskedUrl}`);
+      
+      // Start the server
+      app.listen(PORT, () => {
+        console.log(`🚀 Server running at http://localhost:${PORT}`);
+        console.log(`📝 API endpoints available:`);
+        console.log(`   - Health check: http://localhost:${PORT}/api/health`);
+        console.log(`   - Database test: http://localhost:${PORT}/api/test-db`);
+        console.log(`   - Register user: http://localhost:${PORT}/api/auth/register [POST]`);
+        console.log(`   - Users: http://localhost:${PORT}/api/users [GET, PUT, DELETE]`);
+        console.log(`   - Events: http://localhost:${PORT}/api/events [GET, POST]`);
+        console.log(`   - Clubs: http://localhost:${PORT}/api/clubs [GET, POST, PUT, DELETE]`);
+        console.log(`   - Admin Dashboard: http://localhost:${PORT}/api/admin/dashboard [GET]`);
+      });
+    } catch (error) {
+      console.error('❌ Failed to start server:');
+      console.error(`   ${error.message}`);
+      process.exit(1);
+    }
+  };
+  
+  startServer();
+}
 
-// Handle process termination properly
-process.on('SIGINT', async () => {
-  console.log('Shutting down server...');
-  await prisma.$disconnect();
-  process.exit(0);
-});
+// Export the Express app
+export { app };
 
-process.on('SIGTERM', async () => {
-  console.log('Shutting down server...');
-  await prisma.$disconnect();
-  process.exit(0);
-});
-
-// Catch unhandled promise rejections
-process.on('unhandledRejection', async (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-  await prisma.$disconnect();
-});
-
-startServer(); 
+// No need for this handler function as we're exporting the app directly
+export default app; 

@@ -13,7 +13,8 @@
     "prisma:push": "prisma db push",
     "prisma:studio": "prisma studio",
     "server": "node --experimental-specifier-resolution=node --loader ts-node/esm src/server/index.ts",
-    "server:simple": "node server.js"
+    "server:simple": "node server.js",
+    "vercel-build": "prisma generate && vite build"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
